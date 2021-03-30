@@ -1,0 +1,53 @@
+server:
+  port: 9191
+spring:
+  application:
+    name: API-GATEWAY
+  cloud:
+    gateway:
+      routes:
+        - id: BLOG-SERVICE
+          uri: lb://BLOG-SERVICE
+          predicates:
+            - Path=/blog/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: BLOG-SERVICE
+                fallbackurl: forward:/blogServiceFallback
+
+        - id: COMMENT-SERVICE
+          uri: lb://COMMENT-SERVICE
+          predicates:
+            - Path=/comment/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: COMMENT-SERVICE
+                fallbackurl: forward:/commentServiceFallback
+
+hystrix:
+  command:
+    fallbackcmd:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 500
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: hystrix.stream
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    hostname: localhost
+
+
